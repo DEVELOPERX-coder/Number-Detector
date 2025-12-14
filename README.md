@@ -39,8 +39,8 @@ This project demonstrates the core concepts of Deep Learning—Forward Propagati
 1.  **Clone the repository:**
 
     ```bash
-    git clone [https://github.com/yourusername/cpp-neural-network.git](https://github.com/yourusername/cpp-neural-network.git)
-    cd cpp-neural-network
+    git clone [https://github.com/DEVELOPERX-coder/Number-Detector.git](https://github.com/DEVELOPERX-coder/Number-Detector.git)
+    cd Number-Detector
     ```
 
 2.  **Download the Dataset:**

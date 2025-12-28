@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+#include <string.h>
 
 #define TOTAL_NN_LAYERS 4
 #define INPUT_NODES 784
@@ -63,7 +64,7 @@ int read_mnist_training_images(const char *filename, uint8_t **pixels){
     FILE *file = fopen(filename,"rb");
     if(!file){
         fprintf(stderr, "Error: Could not open file %s\n", filename);
-        return 1;
+        exit(EXIT_FAILURE);
     }
 
     uint32_t magic_number, num_images, num_rows, num_cols;
@@ -101,7 +102,7 @@ int read_mnist_training_images(const char *filename, uint8_t **pixels){
     if (!pixels) {
         fprintf(stderr, "Error: Memory allocation failed\n");
         fclose(file);
-        return 1;
+        exit(EXIT_FAILURE);
     }
 
     fread(*pixels, 1, total_size, file);
@@ -114,7 +115,7 @@ int read_mnist_training_images_labels(const char* filename, uint8_t **train_imag
     FILE *file = fopen(filename, "rb");
     if(!file){
         fprintf(stderr, "Error : Could not open file %s\n", filename);
-        return 1;
+        exit(EXIT_FAILURE);
     }
 
     uint32_t magic_number, num_labels;
@@ -125,7 +126,7 @@ int read_mnist_training_images_labels(const char* filename, uint8_t **train_imag
     if(magic_number != 2049){
         fprintf(stderr, "Error : Invalid Magic Number %u (expected 2049)", magic_number);
         fclose(file);
-        return 0;
+        exit(EXIT_FAILURE);
     }
 
     fread(&num_labels, sizeof(num_labels), 1, file);
@@ -135,7 +136,7 @@ int read_mnist_training_images_labels(const char* filename, uint8_t **train_imag
     if(!train_images_labels){
         fprintf(stderr, "Error : Memory allocation failed\n");
         fclose(file);
-        return 1;
+        exit(EXIT_FAILURE);
     }
 
     fread(*train_images_labels, 1, num_labels, file);
@@ -291,6 +292,14 @@ float* error_H1 = NULL;
     if(!error){
         terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
     }
+    error_H2 = calloc(H2_NODES, sizeof(float));
+    if(!error_H2){
+        terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
+    }
+    error_H1 = calloc(H1_NODES, sizeof(float));
+    if(!error_H1){
+        terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
+    }
 
     float correct_probability = 0;
     int correct = 0;
@@ -353,7 +362,7 @@ float* error_H1 = NULL;
             error[j] = O_OUTPUT[j] - expected_labels[j];
         }
 
-        error_H2 = calloc(H2_NODES, sizeof(float));
+        memset(error_H2, 0, H2_NODES * sizeof(float));
         for(int j = 0; j < OUPUT_NODES; ++j){
             int ind = 0;
             for(int k = j * H2_NODES; k < j * H2_NODES + H2_NODES; ++k){
@@ -376,7 +385,7 @@ float* error_H1 = NULL;
             }
         }
 
-        error_H1 = calloc(H1_NODES, sizeof(float));
+        memset(error_H1, 0, H1_NODES * sizeof(float));
         for(int j = 0; j < H2_NODES; ++j){
             int ind = 0;
             for(int k = j * H1_NODES; k < j * H1_NODES + H1_NODES; ++k){
@@ -414,8 +423,6 @@ float* error_H1 = NULL;
         }
 
         free(expected_labels);
-        free(error_H2);
-        free(error_H1);
     }
 
     clock_t end_time = clock();

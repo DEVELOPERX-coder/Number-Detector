@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
-#include <string.h>
 
 #define TOTAL_NN_LAYERS 4
 #define INPUT_NODES 784
@@ -19,51 +18,37 @@
 #define EPOCHS 10
 #define BATCH_SIZE 30
 
-uint8_t* train_pixels = NULL;
-uint8_t* train_labels = NULL;
-uint8_t* test_pixels = NULL;
-uint8_t* test_labels = NULL;
+static inline void terminate_program(
+    int check_condition,
+    uint8_t* train_pixels, uint8_t* train_labels,
+    uint8_t* test_pixels,  uint8_t* test_labels,
+    float* weights_I_H1, float* weights_H1_H2, float* weights_H2_O,
+    float* bias_H1, float* bias_H2, float* bias_O,
+    float* H1_OUTPUT, float* H2_OUTPUT, float* O_OUTPUT,
+    float* error, float* error_H2, float* error_H1
+) {
+    if (train_pixels) free(train_pixels);
+    if (train_labels) free(train_labels);
+    if (test_pixels)  free(test_pixels);
+    if (test_labels)  free(test_labels);
 
-float* weights_I_H1 = NULL;
-float* weights_H1_H2 = NULL;
-float* weights_H2_O = NULL;
+    if (weights_I_H1) free(weights_I_H1);
+    if (weights_H1_H2) free(weights_H1_H2);
+    if (weights_H2_O) free(weights_H2_O);
 
-float* bias_H1 = NULL;
-float* bias_H2 = NULL;
-float* bias_O = NULL;
+    if (bias_H1) free(bias_H1);
+    if (bias_H2) free(bias_H2);
+    if (bias_O)  free(bias_O);
 
-float* H1_OUTPUT = NULL;
-float* H2_OUTPUT = NULL;
-float* O_OUTPUT = NULL;
+    if (H1_OUTPUT) free(H1_OUTPUT);
+    if (H2_OUTPUT) free(H2_OUTPUT);
+    if (O_OUTPUT)  free(O_OUTPUT);
 
-float* error = NULL;
-float* error_H2 = NULL;
-float* error_H1 = NULL;
+    if (error)    free(error);
+    if (error_H2) free(error_H2);
+    if (error_H1) free(error_H1);
 
-void terminate_program(int check_condition){
-    if(train_pixels != NULL) free(train_pixels);
-    if(train_labels != NULL) free(train_labels);
-
-    if(test_pixels != NULL) free(test_pixels);
-    if(test_labels != NULL) free(test_labels);
-
-    if(weights_I_H1 != NULL) free(weights_I_H1);
-    if(weights_H1_H2 != NULL) free(weights_H1_H2);
-    if(weights_H2_O != NULL) free(weights_H2_O);
-
-    if(bias_H1 != NULL) free(bias_H1);
-    if(bias_H2 != NULL) free(bias_H2);
-    if(bias_O != NULL) free(bias_O);
-
-    if(H1_OUTPUT != NULL) free(H1_OUTPUT);
-    if(H2_OUTPUT != NULL) free(H2_OUTPUT);
-    if(O_OUTPUT != NULL) free(O_OUTPUT);
-
-    if(error != NULL) free(error);
-    if(error_H2 != NULL) free(error_H2);
-    if(error_H1 != NULL) free(error_H1);
-    
-    if(check_condition == 1) exit(EXIT_FAILURE);
+    if (check_condition == 1) exit(EXIT_FAILURE);
     else exit(EXIT_SUCCESS);
 }
 
@@ -78,7 +63,7 @@ int read_mnist_training_images(const char *filename, uint8_t **pixels){
     FILE *file = fopen(filename,"rb");
     if(!file){
         fprintf(stderr, "Error: Could not open file %s\n", filename);
-        terminate_program(1);
+        return 1;
     }
 
     uint32_t magic_number, num_images, num_rows, num_cols;
@@ -116,7 +101,7 @@ int read_mnist_training_images(const char *filename, uint8_t **pixels){
     if (!pixels) {
         fprintf(stderr, "Error: Memory allocation failed\n");
         fclose(file);
-        terminate_program(1);
+        return 1;
     }
 
     fread(*pixels, 1, total_size, file);
@@ -129,7 +114,7 @@ int read_mnist_training_images_labels(const char* filename, uint8_t **train_imag
     FILE *file = fopen(filename, "rb");
     if(!file){
         fprintf(stderr, "Error : Could not open file %s\n", filename);
-        terminate_program(1);
+        return 1;
     }
 
     uint32_t magic_number, num_labels;
@@ -150,7 +135,7 @@ int read_mnist_training_images_labels(const char* filename, uint8_t **train_imag
     if(!train_images_labels){
         fprintf(stderr, "Error : Memory allocation failed\n");
         fclose(file);
-        terminate_program(1);
+        return 1;
     }
 
     fread(*train_images_labels, 1, num_labels, file);
@@ -162,44 +147,65 @@ int read_mnist_training_images_labels(const char* filename, uint8_t **train_imag
 int main() {
     srand(time(NULL));
 
+uint8_t* train_pixels = NULL;
+uint8_t* train_labels = NULL;
+uint8_t* test_pixels = NULL;
+uint8_t* test_labels = NULL;
+
+float* weights_I_H1 = NULL;
+float* weights_H1_H2 = NULL;
+float* weights_H2_O = NULL;
+
+float* bias_H1 = NULL;
+float* bias_H2 = NULL;
+float* bias_O = NULL;
+
+float* H1_OUTPUT = NULL;
+float* H2_OUTPUT = NULL;
+float* O_OUTPUT = NULL;
+
+float* error = NULL;
+float* error_H2 = NULL;
+float* error_H1 = NULL;
+
     if (read_mnist_training_images("./MNIST/train-images.idx3-ubyte", &train_pixels)) {
         printf("Successfully read %d images of size %dx%d\n", IMAGE_COUNT, IMAGE_ROWS, IMAGE_COLS);
     }else{
-        terminate_program(1);
+        terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
     }
 
     if(read_mnist_training_images_labels("./MNIST/train-labels.idx1-ubyte", &train_labels)){
         printf("Successfully read %d labels\n", IMAGE_COUNT);
     }else{
-        terminate_program(1);
+        terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
     }
 
     if (read_mnist_training_images("./MNIST/t10k-images.idx3-ubyte", &test_pixels)) {
         printf("Successfully read %d train_images of size %dx%d\n", TRAIN_IMAGE_COUNT, IMAGE_ROWS, IMAGE_COLS);
     }else{
-        terminate_program(1);
+        terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
     }
 
     if(read_mnist_training_images_labels("./MNIST/t10k-labels.idx1-ubyte", &test_labels)){
         printf("Successfully read %d train_labels\n", TRAIN_IMAGE_COUNT);
     }else{
-        terminate_program(1);
+        terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
     }
 
     weights_I_H1 = calloc(INPUT_NODES * H1_NODES, sizeof(float));
     if(!weights_I_H1){
         fprintf(stderr, "Error: Memory Allocation Error");
-        terminate_program(1);
+        terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
     }
     weights_H1_H2 = calloc(H1_NODES * H2_NODES, sizeof(float));
     if(!weights_H1_H2){
         fprintf(stderr, "Error: Memory Allocation Error");
-        terminate_program(1);
+        terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
     }
     weights_H2_O = calloc(H2_NODES * OUPUT_NODES, sizeof(float));
     if(!weights_H2_O){
         fprintf(stderr, "Error: Memory Allocation Error");
-        terminate_program(1);
+        terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
     }
 
     for(int i = 0; i < INPUT_NODES * H1_NODES; ++i){
@@ -229,19 +235,19 @@ int main() {
     bias_H1 = calloc(H1_NODES, sizeof(float));
     if(!bias_H1){
         fprintf(stderr, "Error: Memory Allocation Error");
-        terminate_program(1);
+        terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
     }
 
     bias_H2 = calloc(H2_NODES, sizeof(float));
     if(!bias_H2){
         fprintf(stderr, "Error: Memory Allocation Error");
-        terminate_program(1);
+        terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
     }
 
     bias_O = calloc(OUPUT_NODES, sizeof(float));
     if(!bias_O){
         fprintf(stderr, "Error: Memory Allocation Error");
-        terminate_program(1);
+        terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
     }
 
     for(int i = 0; i < H1_NODES; ++i){
@@ -270,28 +276,20 @@ int main() {
 
     H1_OUTPUT = calloc(H1_NODES, sizeof(float));
     if(!H1_OUTPUT){
-        terminate_program(1);
+        terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
     }
     H2_OUTPUT = calloc(H2_NODES, sizeof(float));
     if(!H2_OUTPUT){
-        terminate_program(1);
+        terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
     }
     O_OUTPUT = calloc(OUPUT_NODES, sizeof(float));
     if(!O_OUTPUT){
-        terminate_program(1);
+        terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
     }
 
     error = calloc(OUPUT_NODES, sizeof(float));
     if(!error){
-        terminate_program(1);
-    }
-    error_H2 = calloc(H2_NODES, sizeof(float));
-    if(!error_H2){
-        terminate_program(1);
-    }
-    error_H1 = calloc(H1_NODES, sizeof(float));
-    if(!error_H1){
-        terminate_program(1);
+        terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
     }
 
     float correct_probability = 0;
@@ -355,7 +353,7 @@ int main() {
             error[j] = O_OUTPUT[j] - expected_labels[j];
         }
 
-        memset(error_H2, 0, H2_NODES * sizeof(float));
+        error_H2 = calloc(H2_NODES, sizeof(float));
         for(int j = 0; j < OUPUT_NODES; ++j){
             int ind = 0;
             for(int k = j * H2_NODES; k < j * H2_NODES + H2_NODES; ++k){
@@ -378,7 +376,7 @@ int main() {
             }
         }
 
-        memset(error_H1, 0, H1_NODES * sizeof(float));
+        error_H1 = calloc(H1_NODES, sizeof(float));
         for(int j = 0; j < H2_NODES; ++j){
             int ind = 0;
             for(int k = j * H1_NODES; k < j * H1_NODES + H1_NODES; ++k){
@@ -416,6 +414,8 @@ int main() {
         }
 
         free(expected_labels);
+        free(error_H2);
+        free(error_H1);
     }
 
     clock_t end_time = clock();
@@ -490,5 +490,5 @@ int main() {
 
     printf("%f : Probability Correct", (float)correct / total);
 
-    terminate_program(0);
+    terminate_program(0, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
 }

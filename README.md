@@ -79,3 +79,8 @@ TRAINING STARTED!
 Training completed! Time : 1.442000 seconds
 Now Checking Model Accuracy!
 0.954600 : Probability Correct
+
+30 batch size
+Training completed! Time : 1.488000 seconds
+Now Checking Model Accuracy!
+0.893600 : Probability Correct

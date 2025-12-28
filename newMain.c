@@ -17,7 +17,7 @@
 #define TRAIN_IMAGE_COUNT 10000
 
 #define EPOCHS 10
-#define BATCH_SIZE 30
+#define BATCH_SIZE 1
 
 static inline void terminate_program(
     int check_condition,
@@ -157,9 +157,17 @@ float* weights_I_H1 = NULL;
 float* weights_H1_H2 = NULL;
 float* weights_H2_O = NULL;
 
+float* weights_I_H1_UPDATES = NULL;
+float* weights_H1_H2_UPDATES = NULL;
+float* weights_H2_O_UPDATES = NULL;
+
 float* bias_H1 = NULL;
 float* bias_H2 = NULL;
 float* bias_O = NULL;
+
+float* bias_H1_UPDATES = NULL;
+float* bias_H2_UPDATES = NULL;
+float* bias_O_UPDATES = NULL;
 
 float* H1_OUTPUT = NULL;
 float* H2_OUTPUT = NULL;
@@ -194,16 +202,19 @@ float* error_H1 = NULL;
     }
 
     weights_I_H1 = calloc(INPUT_NODES * H1_NODES, sizeof(float));
+    weights_I_H1_UPDATES = calloc(INPUT_NODES * H1_NODES, sizeof(float));
     if(!weights_I_H1){
         fprintf(stderr, "Error: Memory Allocation Error");
         terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
     }
     weights_H1_H2 = calloc(H1_NODES * H2_NODES, sizeof(float));
+    weights_H1_H2_UPDATES = calloc(H1_NODES * H2_NODES, sizeof(float));
     if(!weights_H1_H2){
         fprintf(stderr, "Error: Memory Allocation Error");
         terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
     }
     weights_H2_O = calloc(H2_NODES * OUPUT_NODES, sizeof(float));
+    weights_H2_O_UPDATES = calloc(H2_NODES * OUPUT_NODES, sizeof(float));
     if(!weights_H2_O){
         fprintf(stderr, "Error: Memory Allocation Error");
         terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
@@ -234,18 +245,21 @@ float* error_H1 = NULL;
     }
 
     bias_H1 = calloc(H1_NODES, sizeof(float));
+    bias_H1_UPDATES = calloc(H1_NODES, sizeof(float));
     if(!bias_H1){
         fprintf(stderr, "Error: Memory Allocation Error");
         terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
     }
 
     bias_H2 = calloc(H2_NODES, sizeof(float));
+    bias_H2_UPDATES = calloc(H2_NODES, sizeof(float));
     if(!bias_H2){
         fprintf(stderr, "Error: Memory Allocation Error");
         terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
     }
 
     bias_O = calloc(OUPUT_NODES, sizeof(float));
+    bias_O_UPDATES = calloc(OUPUT_NODES, sizeof(float));
     if(!bias_O){
         fprintf(stderr, "Error: Memory Allocation Error");
         terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
@@ -375,13 +389,15 @@ float* error_H1 = NULL;
         }
 
         for(int j = 0; j < OUPUT_NODES; ++j){
-            bias_O[j] = bias_O[j] - learning_rate * error[j];
+            bias_O_UPDATES[j] += error[j];
+            //bias_O[j] = bias_O[j] - learning_rate * error[j];
         }
 
         for(int j = 0; j < OUPUT_NODES; ++j){
             int ind = 0;
             for(int k = j * H2_NODES; k < j * H2_NODES + H2_NODES; ++k){
-                weights_H2_O[k] = weights_H2_O[k] - learning_rate * error[j] * H2_OUTPUT[ind++];
+                weights_H2_O_UPDATES[k] += error[j] * H2_OUTPUT[ind++];
+                // weights_H2_O[k] = weights_H2_O[k] - learning_rate * error[j] * H2_OUTPUT[ind++];
             }
         }
 
@@ -400,25 +416,68 @@ float* error_H1 = NULL;
         }
 
         for(int j = 0; j < H2_NODES; ++j){
-            bias_H2[j] = bias_H2[j] - learning_rate * error_H2[j];
+            bias_H2_UPDATES[j] += error_H2[j];
+            // bias_H2[j] = bias_H2[j] - learning_rate * error_H2[j];
         }
 
         for(int j = 0; j < H2_NODES; ++j){
             int ind = 0;
             for(int k = j * H1_NODES; k < j * H1_NODES + H1_NODES; ++k){
-                weights_H1_H2[k] = weights_H1_H2[k] - learning_rate * error_H2[j] * H1_OUTPUT[ind++];
+                weights_H1_H2_UPDATES[k] += error_H2[j] * H1_OUTPUT[ind++];
+                // weights_H1_H2[k] = weights_H1_H2[k] - learning_rate * error_H2[j] * H1_OUTPUT[ind++];
             }
         }
 
         for(int j = 0; j < H1_NODES; ++j){
-            bias_H1[j] = bias_H1[j] - learning_rate * error_H1[j];
+            bias_H1_UPDATES[j] += error_H1[j];
+            // bias_H1[j] = bias_H1[j] - learning_rate * error_H1[j];
         }
 
         for(int j = 0; j < H1_NODES; ++j){
             int ind = 0;
             for(int k = j * INPUT_NODES; k < j * INPUT_NODES + INPUT_NODES; ++k){
-                weights_I_H1[k] = weights_I_H1[k] - learning_rate * error_H1[j] * (float)train_pixels[i * IMAGE_COLS * IMAGE_ROWS + ind] / 255;
+                weights_I_H1_UPDATES[k] += error_H1[j] * (float)train_pixels[i * IMAGE_COLS * IMAGE_ROWS + ind] / 255;
+                // weights_I_H1[k] = weights_I_H1[k] - learning_rate * error_H1[j] * (float)train_pixels[i * IMAGE_COLS * IMAGE_ROWS + ind] / 255;
                 ++ind;
+            }
+        }
+
+        if(i % BATCH_SIZE == 0){
+            for(int j = 0; j < OUPUT_NODES; ++j){
+                bias_O[j] = bias_O[j] - learning_rate * bias_O_UPDATES[j] / BATCH_SIZE;
+                bias_O_UPDATES[j] = 0;
+            }
+            for(int j = 0; j < OUPUT_NODES; ++j){
+                int ind = 0;
+                for(int k = j * H2_NODES; k < j * H2_NODES + H2_NODES; ++k){
+                    weights_H2_O[k] = weights_H2_O[k] - learning_rate * weights_H2_O_UPDATES[k] / BATCH_SIZE;
+                    weights_H2_O_UPDATES[k] = 0;
+                }
+            }
+
+            for(int j = 0; j < H2_NODES; ++j){
+                bias_H2[j] = bias_H2[j] - learning_rate * bias_H2_UPDATES[j] / BATCH_SIZE;
+                bias_H2_UPDATES[j] = 0;
+            }
+            for(int j = 0; j < H2_NODES; ++j){
+                int ind = 0;
+                for(int k = j * H1_NODES; k < j * H1_NODES + H1_NODES; ++k){
+                    weights_H1_H2[k] = weights_H1_H2[k] - learning_rate * weights_H1_H2_UPDATES[k] / BATCH_SIZE;
+                    weights_H1_H2_UPDATES[k] = 0;
+                }
+            }
+
+            for(int j = 0; j < H1_NODES; ++j){
+                bias_H1[j] = bias_H1[j] - learning_rate * bias_H1_UPDATES[j] / BATCH_SIZE;
+                bias_H1_UPDATES[j] = 0;
+            }
+            for(int j = 0; j < H1_NODES; ++j){
+                int ind = 0;
+                for(int k = j * INPUT_NODES; k < j * INPUT_NODES + INPUT_NODES; ++k){
+                    weights_I_H1[k] = weights_I_H1[k] - learning_rate * weights_I_H1_UPDATES[k] / BATCH_SIZE;
+                    weights_I_H1_UPDATES[k] = 0;
+                    ++ind;
+                }
             }
         }
     }

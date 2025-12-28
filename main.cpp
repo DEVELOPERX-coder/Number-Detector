@@ -133,8 +133,124 @@ bool read_mnist_train_images_label(const std::string &filename, std::vector<uint
     return true;
 }
 
+void DrawCircle(SDL_Renderer *renderer, int cx, int cy, int diameter,
+                uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+    int radius = diameter / 2;
+    SDL_SetRenderDrawColor(renderer, r, g, b, a);
+
+    int x = radius;
+    int y = 0;
+    int decision = 1 - x;
+
+    while (y <= x)
+    {
+        // 8-way symmetry
+        // SDL_RenderPoint(renderer, cx + x, cy + y);
+        // SDL_RenderPoint(renderer, cx + y, cy + x);
+        // SDL_RenderPoint(renderer, cx - y, cy + x);
+        // SDL_RenderPoint(renderer, cx - x, cy + y);
+        // SDL_RenderPoint(renderer, cx - x, cy - y);
+        // SDL_RenderPoint(renderer, cx - y, cy - x);
+        // SDL_RenderPoint(renderer, cx + y, cy - x);
+        // SDL_RenderPoint(renderer, cx + x, cy - y);
+
+        // Draw horizontal spans
+        SDL_RenderLine(renderer, cx - x, cy + y, cx + x, cy + y);
+        SDL_RenderLine(renderer, cx - x, cy - y, cx + x, cy - y);
+        SDL_RenderLine(renderer, cx - y, cy + x, cx + y, cy + x);
+        SDL_RenderLine(renderer, cx - y, cy - x, cx + y, cy - x);
+
+        y++;
+
+        if (decision <= 0)
+        {
+            decision += 2 * y + 1;
+        }
+        else
+        {
+            x--;
+            decision += 2 * (y - x) + 1;
+        }
+    }
+}
+
+// void DrawCircle(SDL_Renderer *renderer, float starting_x, float starting_y, int diameter, int8_t r, int8_t g, int8_t b, int8_t t)
+// {
+//     SDL_SetRenderDrawColor(renderer, r, g, b, t);
+//     // Diameter can't be 0
+//     if (diameter % 2 == 0)
+//         ++diameter;
+
+//     for (int i = (diameter >> 1); i >= 0; --i)
+//     {
+//         for (int j = 0; j < (diameter >> 1) - i + 1; ++j)
+//         {
+//             SDL_RenderPoint(renderer, starting_x - j, starting_y - i);
+//         }
+//         for (int j = 1; j <= (diameter >> 1) - i; ++j)
+//         {
+//             SDL_RenderPoint(renderer, starting_x + j, starting_y - i);
+//         }
+//     }
+
+//     for (int i = 1; i <= (diameter >> 1); ++i)
+//     {
+//         for (int j = 0; j <= (diameter >> 1) - i; ++j)
+//         {
+//             SDL_RenderPoint(renderer, starting_x - j, starting_y + i);
+//         }
+//         for (int j = 1; j <= (diameter >> 1) - i; ++j)
+//         {
+//             SDL_RenderPoint(renderer, starting_x + j, starting_y + i);
+//         }
+//     }
+// }
+
 int main(int argc, char *argv[])
 {
+    std::vector<std::vector<int8_t>> colorMap(256, std::vector<int8_t>(3));
+
+    for (int i = 0; i < 256; i++)
+    {
+        float t = i / 255.0f;
+
+        float r, g, b;
+
+        if (t < 0.25f)
+        { // blue → cyan
+            float k = t / 0.25f;
+            r = 0;
+            g = k * 255;
+            b = 255;
+        }
+        else if (t < 0.50f)
+        { // cyan → green
+            float k = (t - 0.25f) / 0.25f;
+            r = 0;
+            g = 255;
+            b = (1 - k) * 255;
+        }
+        else if (t < 0.75f)
+        { // green → yellow
+            float k = (t - 0.50f) / 0.25f;
+            r = k * 255;
+            g = 255;
+            b = 0;
+        }
+        else
+        { // yellow → red
+            float k = (t - 0.75f) / 0.25f;
+            r = 255;
+            g = (1 - k) * 255;
+            b = 0;
+        }
+
+        colorMap[i][0] = (int8_t)r;
+        colorMap[i][1] = (int8_t)g;
+        colorMap[i][2] = (int8_t)b;
+    }
+
     std::srand(std::time(0));
 
     std::vector<uint8_t> pixels;
@@ -428,8 +544,14 @@ int main(int argc, char *argv[])
             pixelRect.w = SCALE;
             pixelRect.h = H1_NODE_HEIGHT;
 
-            SDL_SetRenderDrawColor(renderer, H1_output[i] * 255, H1_output[i] * 255, H1_output[i] * 255, 255);
-            SDL_RenderFillRect(renderer, &pixelRect);
+            // SDL_SetRenderDrawColor(renderer, H1_output[i] * 255, H1_output[i] * 255, H1_output[i] * 255, 255);
+            // SDL_RenderFillRect(renderer, &pixelRect);
+
+            uint8_t ind = (int)abs(H1_output[i] * 255);
+            if (ind < 0)
+                ind *= -1;
+
+            DrawCircle(renderer, H1_STARTING_X, H1_STARTING_Y + (i * H1_NODE_HEIGHT), H1_NODE_HEIGHT, colorMap[ind][0], colorMap[ind][1], colorMap[ind][2], 255);
         }
 
         for (int i = 0; i < H2_NODES; ++i)
@@ -440,8 +562,14 @@ int main(int argc, char *argv[])
             pixelRect.w = SCALE;
             pixelRect.h = H2_NODE_HEIGHT;
 
-            SDL_SetRenderDrawColor(renderer, H2_output[i] * 255, H2_output[i] * 255, H2_output[i] * 255, 255);
-            SDL_RenderFillRect(renderer, &pixelRect);
+            // SDL_SetRenderDrawColor(renderer, H2_output[i] * 255, H2_output[i] * 255, H2_output[i] * 255, 255);
+            // SDL_RenderFillRect(renderer, &pixelRect);
+
+            uint8_t ind = (int)abs(H2_output[i] * 255);
+            if (ind < 0)
+                ind *= -1;
+
+            DrawCircle(renderer, H2_STARTING_X, H2_STARTING_Y + (i * H2_NODE_HEIGHT), H2_NODE_HEIGHT, colorMap[ind][0], colorMap[ind][1], colorMap[ind][2], 255);
         }
 
         for (int i = 0; i < O_NODES; ++i)
@@ -452,8 +580,14 @@ int main(int argc, char *argv[])
             pixelRect.w = SCALE;
             pixelRect.h = O_NODE_HEIGHT;
 
-            SDL_SetRenderDrawColor(renderer, O_output[i] * 255, O_output[i] * 255, O_output[i] * 255, 255);
-            SDL_RenderFillRect(renderer, &pixelRect);
+            // SDL_SetRenderDrawColor(renderer, O_output[i] * 255, O_output[i] * 255, O_output[i] * 255, 255);
+            // SDL_RenderFillRect(renderer, &pixelRect);
+
+            uint8_t ind = (int)abs(O_output[i] * 255);
+            if (ind < 0)
+                ind *= -1;
+
+            DrawCircle(renderer, O_STARTING_X, O_STARTING_Y + (i * O_NODE_HEIGHT), O_NODE_HEIGHT / 2, colorMap[ind][0], colorMap[ind][1], colorMap[ind][2], 255);
 
             SDL_FRect barRect = {O_STARTING_X + SCALE + 20, O_STARTING_Y + (float)(i * O_NODE_HEIGHT), O_output[i] * 150, O_NODE_HEIGHT};
             SDL_SetRenderDrawColor(renderer, 173, 255, 47, 255);
@@ -570,6 +704,7 @@ int main(int argc, char *argv[])
                 correct = 1;
                 index1 = 0;
                 index2 = 0;
+                std::cout << "Training is completed : now running test data" << std::endl;
             }
         }
         else

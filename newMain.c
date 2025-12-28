@@ -346,15 +346,15 @@ float* error_H1 = NULL;
         float sum = 0;
 
         for(int j = 0; j < OUPUT_NODES; ++j){
-            sum += exp(O_OUTPUT[j]);
+            sum += expf(O_OUTPUT[j]);
         }
         for(int j = 0; j < OUPUT_NODES; ++j){
-            O_OUTPUT[j] = exp(O_OUTPUT[j]) / sum;
+            O_OUTPUT[j] = expf(O_OUTPUT[j]) / sum;
         }
 
         float learning_rate = 0.01;
         uint8_t correct_label = train_labels[i];
-        float* expected_labels = (float*)calloc(OUPUT_NODES, sizeof(float));
+        float expected_labels[OUPUT_NODES] = {0};
         expected_labels[correct_label] = 1;
 
         for(int j = 0; j < OUPUT_NODES; ++j){
@@ -421,8 +421,6 @@ float* error_H1 = NULL;
                 ++ind;
             }
         }
-
-        free(expected_labels);
     }
 
     clock_t end_time = clock();
@@ -472,15 +470,15 @@ float* error_H1 = NULL;
         float sum = 0;
 
         for(int j = 0; j < OUPUT_NODES; ++j){
-            sum += exp(O_OUTPUT[j]);
+            sum += expf(O_OUTPUT[j]);
         }
         for(int j = 0; j < OUPUT_NODES; ++j){
-            O_OUTPUT[j] = exp(O_OUTPUT[j]) / sum;
+            O_OUTPUT[j] = expf(O_OUTPUT[j]) / sum;
         }
 
         float learning_rate = 0.01;
         uint8_t correct_label = train_labels[i];
-        float* expected_labels = (float*)calloc(OUPUT_NODES, sizeof(float));
+        float expected_labels[OUPUT_NODES] = {0};
         expected_labels[correct_label] = 1;
 
         int greatest = 1;
@@ -491,8 +489,6 @@ float* error_H1 = NULL;
             }
         }
         if(greatest == 1) ++correct;
-
-        free(expected_labels);
     }
 
     printf("%f : Probability Correct", (float)correct / total);

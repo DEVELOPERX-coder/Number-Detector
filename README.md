@@ -68,3 +68,14 @@ The network consists of an input layer (784 nodes), two hidden layers (128 and 6
 ## 📝 License
 
 This project is open source and available under the [MIT License](LICENSE).
+
+gcc -Ofast -march=native -funroll-loops -ffast-math .\newMain.c -o test
+.\test.exe
+Successfully read 60000 images of size 28x28
+Successfully read 60000 labels
+Successfully read 10000 train_images of size 28x28
+Successfully read 10000 train_labels
+TRAINING STARTED!
+Training completed! Time : 1.442000 seconds
+Now Checking Model Accuracy!
+0.954600 : Probability Correct

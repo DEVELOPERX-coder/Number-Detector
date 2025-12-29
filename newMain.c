@@ -149,6 +149,7 @@ int main() {
     srand(time(NULL));
 
 uint8_t* train_pixels = NULL;
+float* train_pixels_float = NULL;
 uint8_t* train_labels = NULL;
 uint8_t* test_pixels = NULL;
 uint8_t* test_labels = NULL;
@@ -181,6 +182,11 @@ float* error_H1 = NULL;
         printf("Successfully read %d images of size %dx%d\n", IMAGE_COUNT, IMAGE_ROWS, IMAGE_COLS);
     }else{
         terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
+    }
+
+    train_pixels_float = malloc(sizeof(float) * 60000 * 28 * 28);
+    for(int i = 0; i < 60000 * 28 * 28; ++i){
+        train_pixels_float[i] = (float)train_pixels[i] / 255;
     }
 
     if(read_mnist_training_images_labels("./MNIST/train-labels.idx1-ubyte", &train_labels)){
@@ -337,7 +343,7 @@ float* error_H1 = NULL;
             H1_OUTPUT[j] = 0;
             int ind = 0;
             for(int k = j * INPUT_NODES; k < j * INPUT_NODES + INPUT_NODES; ++k){
-                H1_OUTPUT[j] += weights_I_H1[k] * (float)(train_pixels[index + ind++]) / 255;
+                H1_OUTPUT[j] += weights_I_H1[k] * train_pixels_float[index + ind++];
             }
             H1_OUTPUT[j] += bias_H1[j];
 
@@ -444,7 +450,7 @@ float* error_H1 = NULL;
             int ind = 0;
             for(int k = j * INPUT_NODES; k < j * INPUT_NODES + INPUT_NODES; ++k){
                 // weights_I_H1_UPDATES[k] += error_H1[j] * (float)train_pixels[i * IMAGE_COLS * IMAGE_ROWS + ind] / 255;
-                weights_I_H1[k] = weights_I_H1[k] - learning_rate * error_H1[j] * (float)train_pixels[i * IMAGE_COLS * IMAGE_ROWS + ind] / 255;
+                weights_I_H1[k] = weights_I_H1[k] - learning_rate * error_H1[j] * train_pixels_float[i * IMAGE_COLS * IMAGE_ROWS + ind];
                 ++ind;
             }
         }
@@ -507,7 +513,7 @@ float* error_H1 = NULL;
             H1_OUTPUT[j] = 0;
             int ind = 0;
             for(int k = j * INPUT_NODES; k < j * INPUT_NODES + INPUT_NODES; ++k){
-                H1_OUTPUT[j] += weights_I_H1[k] * (float)(train_pixels[index + ind++]) / 255;
+                H1_OUTPUT[j] += weights_I_H1[k] * train_pixels_float[index + ind++];
             }
             H1_OUTPUT[j] += bias_H1[j];
 
@@ -561,6 +567,8 @@ float* error_H1 = NULL;
     printf("%f : Probability Correct , EPOCH : %d\n", (float)correct / total, e);
     }
     printf("%f seconds : Total Time for EPOCH : %d\n", total_time, EPOCHS);
+
+    free(train_pixels_float);
 
     terminate_program(0, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error, error_H2, error_H1 );
 }

@@ -4,6 +4,7 @@
 #include <time.h>
 #include <math.h>
 #include <string.h>
+#include <immintrin.h>
 
 #define TOTAL_NN_LAYERS 4
 #define INPUT_NODES 784
@@ -342,9 +343,21 @@ float* error_H1 = NULL;
         for(int j = 0; j < H1_NODES; ++j){
             H1_OUTPUT[j] = 0;
             int ind = 0;
-            for(int k = j * INPUT_NODES; k < j * INPUT_NODES + INPUT_NODES; ++k){
-                H1_OUTPUT[j] += weights_I_H1[k] * train_pixels_float[index + ind++];
+__m256 vec_sum = _mm256_setzero_ps();
+            // for(int k = j * INPUT_NODES; k < j * INPUT_NODES + INPUT_NODES; ++k){
+            //     H1_OUTPUT[j] += weights_I_H1[k] * train_pixels_float[index + ind++];
+            // }
+            for(int k = j * INPUT_NODES; k < j * INPUT_NODES + INPUT_NODES; k += 8){
+                __m256 vec_weights = _mm256_loadu_ps(&weights_I_H1[k]);
+                __m256 vec_pixels = _mm256_loadu_ps(&train_pixels_float[index + ind]);
+                ind += 8;
+                vec_sum = _mm256_fmadd_ps(vec_weights, vec_pixels, vec_sum); 
             }
+            float temp[8] = {0};
+                _mm256_storeu_ps(temp, vec_sum);
+                for(int o = 0; o < 8; ++o){
+                    H1_OUTPUT[j] += temp[o];
+                }
             H1_OUTPUT[j] += bias_H1[j];
 
             if(H1_OUTPUT[j] <= 0) H1_OUTPUT[j] = 0;

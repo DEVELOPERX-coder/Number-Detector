@@ -343,28 +343,31 @@ float* error_H1 = NULL;
         for(int j = 0; j < H1_NODES; ++j){
             H1_OUTPUT[j] = 0;
             int ind = 0;
-__m256 vec_sum = _mm256_setzero_ps();
-            // for(int k = j * INPUT_NODES; k < j * INPUT_NODES + INPUT_NODES; ++k){
-            //     H1_OUTPUT[j] += weights_I_H1[k] * train_pixels_float[index + ind++];
-            // }
-            for(int k = j * INPUT_NODES; k < j * INPUT_NODES + INPUT_NODES; k += 8){
-                __m256 vec_weights = _mm256_loadu_ps(&weights_I_H1[k]);
-                __m256 vec_pixels = _mm256_loadu_ps(&train_pixels_float[index + ind]);
-                ind += 8;
-                vec_sum = _mm256_fmadd_ps(vec_weights, vec_pixels, vec_sum); 
+// __m256 vec_sum = _mm256_setzero_ps();
+            for(int k = j * INPUT_NODES; k < j * INPUT_NODES + INPUT_NODES; ++k){
+                H1_OUTPUT[j] += weights_I_H1[k] * train_pixels_float[index + ind++];
             }
+            
+            // for(int k = j * INPUT_NODES; k < j * INPUT_NODES + INPUT_NODES; k += 8){
+            //     __m256 vec_weights = _mm256_loadu_ps(&weights_I_H1[k]);
+            //     __m256 vec_pixels = _mm256_loadu_ps(&train_pixels_float[index + ind]);
+            //     ind += 8;
+            //     vec_sum = _mm256_fmadd_ps(vec_weights, vec_pixels, vec_sum); 
+            // }
+
             // float temp[8] = {0};
             //     _mm256_storeu_ps(temp, vec_sum);
             //     for(int o = 0; o < 8; ++o){
             //         H1_OUTPUT[j] += temp[o];
             //     }
-            __m256 hsum = _mm256_hadd_ps(vec_sum, vec_sum);
-            hsum = _mm256_hadd_ps(hsum, hsum);
-            __m128 low_lane = _mm256_castps256_ps128(hsum);
-            __m128 high_lane = _mm256_extractf128_ps(hsum, 1);
-            __m128 final_sum_vec = _mm_add_ps(low_lane, high_lane);
-            float final_val = _mm_cvtss_f32(final_sum_vec);
-            H1_OUTPUT[j] += final_val;
+            
+            // __m256 hsum = _mm256_hadd_ps(vec_sum, vec_sum);
+            // hsum = _mm256_hadd_ps(hsum, hsum);
+            // __m128 low_lane = _mm256_castps256_ps128(hsum);
+            // __m128 high_lane = _mm256_extractf128_ps(hsum, 1);
+            // __m128 final_sum_vec = _mm_add_ps(low_lane, high_lane);
+            // float final_val = _mm_cvtss_f32(final_sum_vec);
+            // H1_OUTPUT[j] += final_val;
 
             H1_OUTPUT[j] += bias_H1[j];
 

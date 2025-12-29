@@ -84,3 +84,51 @@ Now Checking Model Accuracy!
 Training completed! Time : 1.488000 seconds
 Now Checking Model Accuracy!
 0.893600 : Probability Correct
+
+1 batch size
+Training completed! Time : 2.728000 seconds
+Now Checking Model Accuracy!
+0.960400 : Probability Correct
+
+Training completed! Time : 1.505000 seconds
+Now Checking Model Accuracy!
+0.949700 : Probability Correct , EPOCH : 1
+Training completed! Time : 1.466000 seconds
+Now Checking Model Accuracy!
+0.968500 : Probability Correct , EPOCH : 2
+Training completed! Time : 1.468000 seconds
+Now Checking Model Accuracy!
+0.968300 : Probability Correct , EPOCH : 3
+Training completed! Time : 1.462000 seconds
+Now Checking Model Accuracy!
+0.973700 : Probability Correct , EPOCH : 4
+Training completed! Time : 1.462000 seconds
+Now Checking Model Accuracy!
+0.977000 : Probability Correct , EPOCH : 5
+Training completed! Time : 1.453000 seconds
+Now Checking Model Accuracy!
+0.984000 : Probability Correct , EPOCH : 6
+Training completed! Time : 1.477000 seconds
+Now Checking Model Accuracy!
+0.982200 : Probability Correct , EPOCH : 7
+Training completed! Time : 1.458000 seconds
+Now Checking Model Accuracy!
+0.983700 : Probability Correct , EPOCH : 8
+Training completed! Time : 1.449000 seconds
+Now Checking Model Accuracy!
+0.982200 : Probability Correct , EPOCH : 9
+Training completed! Time : 1.459000 seconds
+Now Checking Model Accuracy!
+0.984400 : Probability Correct , EPOCH : 10
+Training completed! Time : 1.456000 seconds
+Now Checking Model Accuracy!
+0.980300 : Probability Correct , EPOCH : 11
+Training completed! Time : 1.473000 seconds
+Now Checking Model Accuracy!
+0.988500 : Probability Correct , EPOCH : 12
+Training completed! Time : 1.462000 seconds
+Now Checking Model Accuracy!
+0.987500 : Probability Correct , EPOCH : 13
+Training completed! Time : 1.461000 seconds
+Now Checking Model Accuracy!
+1.000000 : Probability Correct , EPOCH : 14

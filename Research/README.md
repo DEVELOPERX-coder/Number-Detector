@@ -12,19 +12,20 @@ This program benchmarks different neural network configurations to find which ar
 
 ```
 Hidden Layers: 0 → 1 → 2 → ... → 10
-Nodes per layer: 1 → 10 → 100 → 1000
+Nodes per layer: 1 → 2 → ... → 128 (Carry-based increment)
 ```
 
 **Example progression for 2 hidden layers:**
 ```
 784 : 1 : 1 : 10
-784 : 1 : 10 : 10
-784 : 10 : 10 : 10
-784 : 10 : 100 : 10
-784 : 100 : 100 : 10
+784 : 1 : 2 : 10
 ...
-784 : 1000 : 1000 : 10
+784 : 1 : 128 : 10
+784 : 2 : 1 : 10
+...
 ```
+
+The algorithm increments the nodes in the first hidden layer, carrying over to the next layer when `NODES_CAP` is reached, similar to a number system.
 
 The algorithm always increments the layer with the **fewest nodes** first, ensuring balanced architectures.
 
@@ -132,10 +133,10 @@ FOR each architecture configuration:
 | `OUTPUT_NODES` | 10 | Digits 0-9 |
 | `LEARNING_RATE` | 0.01 | SGD step size |
 | `MAX_LAYERS` | 12 | Input + 10 hidden + Output |
-| `NODES_CAP` | 1000 | Max nodes per hidden layer |
-| `EPOCHS_CAP` | 100 | Max epochs per run |
-| `RUNS_PER_CONFIG` | 10 | Runs averaged per architecture |
-| `TARGET_ACCURACY` | 1.0 | 100% accuracy target |
+| `NODES_CAP` | 128 | Max nodes per hidden layer |
+| `EPOCHS_CAP` | 20 | Max epochs per run |
+| `RUNS_PER_CONFIG` | 5 | Runs averaged per architecture |
+| `TARGET_ACCURACY` | 0.98 | 98% accuracy target |
 
 ---
 
@@ -148,17 +149,24 @@ For each architecture tested:
 Testing: 2 hidden layers
 Architecture: 784 : 128 : 64 : 10
 ========================================
-  Run 1: Epochs=45, Time=12.34s, Achieved100=YES
-  Run 2: Epochs=52, Time=13.21s, Achieved100=YES
+  Run 1: Epochs=15, Time=1.34s, Achieved100=YES
+  Run 2: Epochs=18, Time=1.51s, Achieved100=YES
   ...
-  Run 10: Epochs=100, Time=25.67s, Achieved100=NO
+  Run 5: Epochs=20, Time=1.87s, Achieved100=NO
 
 ------ RESULTS ------
-TOTAL EPOCHS AVERAGE : 67.30
+TOTAL EPOCHS AVERAGE : 17.30
 ARCHITECTURE : 784 : 128 : 64 : 10
-TOTAL TIME AVERAGE : 17.45 sec
-100% ACHIEVED : 8/10 runs
+TOTAL TIME AVERAGE : 1.45 sec
+98.00% ACHIEVED : 4/5 runs
 ```
+
+### CSV Logging
+
+The program automatically logs results to CSV files in the execution directory:
+
+- **`runs.csv`**: Detailed logs for every individual training run.
+- **`results.csv`**: Aggregated results for each architecture configuration.
 
 ---
 
@@ -212,4 +220,3 @@ Number-Detector/
 - [ ] Implement Adam optimizer instead of SGD
 - [ ] Add early stopping based on validation loss
 - [ ] Parallelize runs with OpenMP/pthreads
-- [ ] Export results to CSV for analysis

@@ -172,13 +172,13 @@ int main(){
 
     // Train
 
-    if(read_MNIST_images("./MNIST/train-images.idx3-ubyte", &train_pixels)){
+    if(read_MNIST_images("../MNIST/train-images.idx3-ubyte", &train_pixels)){
         terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error_O, error_H2, error_H1);
     }else{
         printf("Successfully Read %d images of size R %d X C %d\n", TRAIN_IMAGE_COUNT, IMAGE_ROWS, IMAGE_COLS);
     }
 
-    if(read_MNIST_labels("./MNIST/train-labels.idx1-ubyte", &train_labels)){
+    if(read_MNIST_labels("../MNIST/train-labels.idx1-ubyte", &train_labels)){
         terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error_O, error_H2, error_H1);
     }else{
         printf("Successfully Read %d labels\n", TRAIN_IMAGE_COUNT);
@@ -186,13 +186,13 @@ int main(){
 
     // Testing
 
-    if(read_MNIST_images("./MNIST/t10k-images.idx3-ubyte", &test_pixels)){
+    if(read_MNIST_images("../MNIST/t10k-images.idx3-ubyte", &test_pixels)){
         terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error_O, error_H2, error_H1);
     }else{
         printf("Successfully Read %d images of size R %d X C %d\n", TEST_IMAGE_COUNT, IMAGE_ROWS, IMAGE_COLS);
     }
 
-    if(read_MNIST_labels("./MNIST/t10k-labels.idx1-ubyte", &test_labels)){
+    if(read_MNIST_labels("../MNIST/t10k-labels.idx1-ubyte", &test_labels)){
         terminate_program(1, train_pixels, train_labels, test_pixels, test_labels, weights_I_H1, weights_H1_H2, weights_H2_O, bias_H1, bias_H2, bias_O, H1_OUTPUT, H2_OUTPUT, O_OUTPUT, error_O, error_H2, error_H1);
     }else{
         printf("Successfully Read %d labels\n", TEST_IMAGE_COUNT);
@@ -323,7 +323,7 @@ int main(){
     int H2nS = H2_NODES * sizeof(float);
     int H1nS = H1_NODES * sizeof(float);
 
-    for(int EPOCH = 1; EPOCH < EPOCHS; ++EPOCH){
+    for(int EPOCH = 1; EPOCH <= EPOCHS; ++EPOCH){
         correct_probability = 0;
         correct = 0;
         total = 0;

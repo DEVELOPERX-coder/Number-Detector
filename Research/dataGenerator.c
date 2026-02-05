@@ -379,6 +379,56 @@ RunResult train_until_accuracy(int* layer_sizes, int num_layers,
 
 // ======================== MAIN ARCHITECTURE SEARCH ========================
 
+void log_to_csv_run(int* layer_sizes, int num_layers, float epochs_needed, float time_taken, float final_accuracy, bool achieved_100) {
+    FILE* f = fopen("runs.csv", "a");
+    if (!f) return;
+
+    // Check if empty to write header
+    fseek(f, 0, SEEK_END);
+    if (ftell(f) == 0) {
+        fprintf(f, "Architecture,EpochsNeeded,TimeTaken,FinalAccuracy,AchievedTargetAccuracy %.2f%%\n", TARGET_ACCURACY * 100.0f);
+    }
+    
+    // Architecture string
+    fprintf(f, "\"");
+    for (int i = 0; i < num_layers; ++i) {
+        fprintf(f, "%d", layer_sizes[i]);
+        if (i < num_layers - 1) fprintf(f, ":");
+    }
+    fprintf(f, "\",%.2f,%.2fsec,%.2f%%,%s\n", 
+            epochs_needed, 
+            time_taken, 
+            final_accuracy,
+            achieved_100 ? "YES" : "NO");
+    
+    fclose(f);
+}
+
+void log_to_csv_result(int* layer_sizes, int num_layers, float avg_epochs, float avg_time, int achieved_count, int total_runs) {
+    FILE* f = fopen("results.csv", "a");
+    if (!f) return;
+
+    // Check if empty to write header
+    fseek(f, 0, SEEK_END);
+    if (ftell(f) == 0) {
+        fprintf(f, "Architecture,AvgEpochs,AvgTime,SuccessRate,Runs\n");
+    }
+    
+    // Architecture string
+    fprintf(f, "\"");
+    for (int i = 0; i < num_layers; ++i) {
+        fprintf(f, "%d", layer_sizes[i]);
+        if (i < num_layers - 1) fprintf(f, ":");
+    }
+    fprintf(f, "\",%.2f,%.2f,%.2f%%,%d/%d\n", 
+            avg_epochs, 
+            avg_time, 
+            ((float)achieved_count / total_runs) * 100.0f,
+            achieved_count, total_runs);
+    
+    fclose(f);
+}
+
 void print_architecture(int* layer_sizes, int num_layers) {
     for (int i = 0; i < num_layers; ++i) {
         printf("%d", layer_sizes[i]);
@@ -461,6 +511,8 @@ int main() {
                 printf("  Run %d: Epochs=%d, Time=%.2fs, Accuracy=%.2f%%, Achieved100=%s\n",
                        run + 1, res.epochs_needed, res.time_taken, res.final_accuracy,
                        res.achieved_100 ? "YES" : "NO");
+
+                log_to_csv_run(layer_sizes, num_layers, res.epochs_needed, res.time_taken, res.final_accuracy, res.achieved_100);
                 
                 // Skip remaining runs if second run didn't achieve target accuracy
                 if (run == 1 && achieved_count == 0) {
@@ -476,6 +528,9 @@ int main() {
             printf("\n");
             printf("TOTAL TIME AVERAGE : %.2f sec\n", total_time / runs_completed);
             printf("%.2f%% ACHIEVED : %d/%d runs\n", TARGET_ACCURACY * 100, achieved_count, runs_completed);
+            
+            log_to_csv_result(layer_sizes, num_layers, total_epochs / runs_completed, total_time / runs_completed, achieved_count, runs_completed);
+
             continue;
         }
 
@@ -506,6 +561,8 @@ int main() {
                 printf("  Run %d: Epochs=%d, Time=%.2fs, Accuracy=%.2f%%, Achieved100=%s\n",
                        run + 1, res.epochs_needed, res.time_taken, res.final_accuracy,
                        res.achieved_100 ? "YES" : "NO");
+
+                log_to_csv_run(layer_sizes, num_layers, res.epochs_needed, res.time_taken, res.final_accuracy, res.achieved_100);
                 
                 // Skip remaining runs if second run didn't achieve target accuracy
                 if (run == 1 && achieved_count == 0) {
@@ -522,24 +579,22 @@ int main() {
             printf("TOTAL TIME AVERAGE : %.2f sec\n", total_time / runs_completed);
             printf("%.2f%% ACHIEVED : %d/%d runs\n", TARGET_ACCURACY * 100, achieved_count, runs_completed);
 
-            // Increment nodes: find the layer with minimum nodes and increment it
-            // Start from layer 1 (first hidden) to layer num_layers-2 (last hidden)
-            int min_layer = 1;
-            int min_nodes = layer_sizes[1];
-            for (int h = 2; h < num_layers - 1; ++h) {
-                if (layer_sizes[h] < min_nodes) {
-                    min_nodes = layer_sizes[h];
-                    min_layer = h;
+            log_to_csv_result(layer_sizes, num_layers, total_epochs / runs_completed, total_time / runs_completed, achieved_count, runs_completed);
+
+            // Increment nodes: untill achieved target accuracy or all layers are maxed
+            int carry = 1;
+            for(int h = num_layers - 2; h > 0; --h) {
+                layer_sizes[h] += carry;
+                if(layer_sizes[h] >= NODES_CAP || achieved_count == RUNS_PER_CONFIG){
+                    layer_sizes[h] = 1;
+                    carry = 1;
+                }else{
+                    carry = 0;
+                    break;
                 }
             }
-
-            if (min_nodes >= NODES_CAP) {
+            if(carry == 1){
                 all_maxed = true;
-            } else {
-                // Increment by a step (for faster testing)
-                // Step size grows as we go higher
-                int step = (min_nodes < 10) ? 1 : (min_nodes < 100) ? 10 : 100;
-                layer_sizes[min_layer] = (min_nodes + step <= NODES_CAP) ? min_nodes + step : NODES_CAP;
             }
         }
     }
